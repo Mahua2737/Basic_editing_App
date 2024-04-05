@@ -1,14 +1,14 @@
 import streamlit as st
-import numpy as np
-import cv2
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image
 import io
 import base64
+from gray import apply_gray
+from black_and_white import apply_black_and_white
+from pencil_sketch import apply_pencil_sketch
+from blur_effect import apply_blur_effect
 
-
+# UI code
 image = Image.open("Log.jpeg")
-
-
 col1, col2 = st.columns([0.8, 0.2])
 with col1:
     st.markdown(
@@ -22,7 +22,6 @@ with col1:
 with col2:
     st.image(image, width=150)
 
-
 st.sidebar.markdown('<p class="font">Image Processing App</p>', unsafe_allow_html=True)
 with st.sidebar.expander("About the App"):
     st.write(
@@ -31,15 +30,12 @@ with st.sidebar.expander("About the App"):
      """
     )
 
-
 filter = st.sidebar.radio(
     "Convert your photo to:",
     ["Original", "Gray Image", "Black and White", "Pencil Sketch", "Blur Effect"],
 )
 
-
 uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
-
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
@@ -60,25 +56,13 @@ if uploaded_file is not None:
         transformed_image = transformed_image.resize((resized_width, resized_height))
 
         if filter == "Gray Image":
-            transformed_image = ImageOps.grayscale(transformed_image)
+            transformed_image = apply_gray(transformed_image)
         elif filter == "Black and White":
-            transformed_image = ImageOps.grayscale(transformed_image)
-            slider = st.sidebar.slider("Adjust the intensity", 1, 255, 127, step=1)
-            transformed_image = transformed_image.point(
-                lambda x: 0 if x < slider else 255
-            )
+            transformed_image = apply_black_and_white(transformed_image, slider)
         elif filter == "Pencil Sketch":
-            transformed_image = ImageOps.grayscale(transformed_image)
-            slider = st.sidebar.slider("Adjust the intensity", 25, 255, 125, step=2)
-            transformed_image = transformed_image.filter(
-                ImageFilter.GaussianBlur(radius=slider)
-            )
-            transformed_image = ImageOps.invert(transformed_image)
+            transformed_image = apply_pencil_sketch(transformed_image, slider)
         elif filter == "Blur Effect":
-            slider = st.sidebar.slider("Adjust the intensity", 5, 81, 33, step=2)
-            transformed_image = transformed_image.filter(
-                ImageFilter.GaussianBlur(radius=slider)
-            )
+            transformed_image = apply_blur_effect(transformed_image, slider)
         else:
             pass
 
@@ -90,3 +74,4 @@ if uploaded_file is not None:
         b64_image = base64.b64encode(buffered.read()).decode()
         href = f'<a href="data:file/jpg;base64,{b64_image}" download="transformed_image.jpg">Download image</a>'
         st.sidebar.markdown(href, unsafe_allow_html=True)
+
